@@ -1,0 +1,73 @@
+pipeline {
+    agent { label 'java' }
+
+    triggers {
+        pollSCM('* * * * *')
+    }
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git url: 'https://github.com/rani9010/spring-petclinic.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('SonarCloud Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('SONAR') {
+                        sh '''
+                            mvn package sonar:sonar \
+                            -Dsonar.projectKey=rani9010_spring-petclinic \
+                            -Dsonar.organization=rani9010 \
+                            -Dsonar.host.url=https://sonarcloud.io
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Upload JAR to JFrog') {
+            steps {
+                script {
+                    def server = Artifactory.server('JFROG')
+
+                    def uploadSpec = """{
+                        "files": [
+                            {
+                                "pattern": "target/*.jar",
+                                "target": "praticerepo-libs-release/"
+                            }
+                        ]
+                    }"""
+
+                    server.upload(uploadSpec)
+                    server.publishBuildInfo()
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: 'target/*.jar'
+            junit '**/target/surefire-reports/*.xml'
+            echo '🧹 Cleaning up... This runs no matter what.'
+        }
+        success {
+            echo '✅ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed! Check the logs.'
+        }
+    }
+}
+
+
+           
