@@ -1,30 +1,38 @@
 trigger:
   - main 
-pool: selfhostedvm  
+
+pool: default
 
 stages:
-  - stage:
+  - stage: 
     jobs:
-      - job:
+      - job: 
         steps:
-          - task: SonarQubeprepare@7
+          - task: SonarCloudprepare@2
             displayName: mysonarconfiguration
             inputs:
-              SonarQube: https://sonarcloud.io/
+              SonarCloud: mysonarcloud
+              organization: nakkaestherrani
               scannerMode: 'other'
-              cliprojectKey: nakkaestherrani_spring-petclinic.git
-              cliprojectName: spring-petclinic.git
+              projectKey: nakkaestherrani_spring-petclinic.git
+              projectName: spring-petclinic.git
               configMode: 'manual'
-          - task: SonarQubePublish@7
-            inputs:
-              pollingTimeoutSec: '30'
+          
           - task: Maven@4
+            displayName: 'java build task'
             inputs:
               mavenPOMFile: 'pom.xml'
               goals: 'package sonar:sonar'
               publishJUnitresults: true
               testresultfiles: '**surefire-reports/test-*.xml'
-              sonarQubeRunAnalysis: true 
+          - task: sonarCloudAnalyze@2
+            displayName: 'Run SonarCloud Analyze'    
+          - task: SonarCloudPublish@2
+            displayName: 'Publish SonarCloud Result'
+            inputs:
+              pollingTimeoutSec: '300'    
+
+              sonarCloudRunAnalysis: true 
               javahomeoption: 'JDKversion'
               jdkversionoption: 'default'
               jdkarchitectureoption: 'x64'
