@@ -1,0 +1,38 @@
+trigger:
+  - main 
+pool: selfhostedvm  
+
+stages:
+  - stage:
+    jobs:
+      - job:
+        steps:
+          - task: SonarQubeprepare@7
+            displayName: mysonarconfiguration
+            inputs:
+              SonarQube: https://sonarcloud.io/
+              scannerMode: 'other'
+              cliprojectKey: nakkaestherrani_spring-petclinic.git
+              cliprojectName: spring-petclinic.git
+              configMode: 'manual'
+          - task: SonarQubePublish@7
+            inputs:
+              pollingTimeoutSec: '30'
+          - task: Maven@4
+            inputs:
+              mavenPOMFile: 'pom.xml'
+              goals: 'package sonar:sonar'
+              publishJUnitresults: true
+              testresultfiles: '**surefire-reports/test-*.xml'
+              sonarQubeRunAnalysis: true 
+              javahomeoption: 'JDKversion'
+              jdkversionoption: 'default'
+              jdkarchitectureoption: 'x64'
+          - task: CopyFiles@2
+            dispiayName: 'copytheallfiles'
+            inputs:
+              contents: '**'
+              TargetFolder: '$(Build.Artifactstaging directory)'
+          - publish: '$(Build.Artifactstaging directory)'
+            dispiayName: 'jarfile publish'
+            artifact: drop      
