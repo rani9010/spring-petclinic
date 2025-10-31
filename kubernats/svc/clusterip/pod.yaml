@@ -1,0 +1,13 @@
+apiVersion: v1 
+kind: Pod
+metedata: 
+  name: svc-Pod
+  labels:
+    app: test
+spec:
+  containers:
+    - name: test-containers
+      image:
+      ports:
+        ContainerPort: 8080
+        protocol: TCP    

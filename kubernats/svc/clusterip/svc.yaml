@@ -1,0 +1,10 @@
+apiVersion: v1 
+kind: service
+metedata: 
+  name: clusterip.svc
+spec:
+  type: clusterip
+  selector:
+    app: test
+    ports:
+      - port: 8080    
