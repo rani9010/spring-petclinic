@@ -1,0 +1,46 @@
+trigger:
+  - main 
+
+pool: default
+
+stages:
+  - stage: 
+    jobs:
+      - job: 
+        steps:
+          - task: SonarCloudprepare@2
+            displayName: mysonarconfiguration
+            inputs:
+              SonarCloud: mysonarcloud
+              organization: nakkaestherrani
+              scannerMode: 'other'
+              projectKey: nakkaestherrani_spring-petclinic.git
+              projectName: spring-petclinic.git
+              configMode: 'manual'
+          
+          - task: Maven@4
+            displayName: 'java build task'
+            inputs:
+              mavenPOMFile: 'pom.xml'
+              goals: 'package sonar:sonar'
+              publishJUnitresults: true
+              testresultfiles: '**surefire-reports/test-*.xml'
+          - task: sonarCloudAnalyze@2
+            displayName: 'Run SonarCloud Analyze'    
+          - task: SonarCloudPublish@2
+            displayName: 'Publish SonarCloud Result'
+            inputs:
+              pollingTimeoutSec: '300'    
+
+              sonarCloudRunAnalysis: true 
+              javahomeoption: 'JDKversion'
+              jdkversionoption: 'default'
+              jdkarchitectureoption: 'x64'
+          - task: CopyFiles@2
+            dispiayName: 'copytheallfiles'
+            inputs:
+              contents: '**'
+              TargetFolder: '$(Build.Artifactstaging directory)'
+          - publish: '$(Build.Artifactstaging directory)'
+            dispiayName: 'jarfile publish'
+            artifact: drop      
