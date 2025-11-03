@@ -1,0 +1,37 @@
+trigger:
+  - main
+
+pool: default
+
+stages:
+  - stage:
+    jobs:
+      - job:
+        steps:
+          - task: SonarCloudPrepare@2
+            displayName: sonarqube_configuration
+            inputs:
+              SonarCloud: sonarserviceconnect
+              organization: srikarmandadapu22-cmd
+              scannerMode: Other
+              configMode: manual
+              projectKey: srikarmandadapu22-cmd_spring-petclinic
+              projectName: petclinic
+
+          - task: Maven@4
+            displayName: Maven build&Package publishJunit
+            inputs:
+              mavenPOMFile: 'pom.xml'
+              goals: 'package sonar:sonar'
+              publishJunitResults: true
+              testResultsfiles: '/surefire-reports/TEST-*.xml'
+
+          - task: CopyFiles@2
+            displayName: Copying .jar CopyFile
+            inputs:
+              contents: '*/.jar'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - publish: '$(Build.ArtifactStagingDirectory)'
+            displayName: copying into artifactory
+            artifact: drop
