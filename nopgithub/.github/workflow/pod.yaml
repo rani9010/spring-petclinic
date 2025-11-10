@@ -3,12 +3,38 @@ name: mynewdotnet
 on:
   push:
     branches:
-       - develop
-jobs: 
-  dotnet_publish:  
-       run-on: 'selfhosted'
-       steps:
-         - name: nop checkout
-           uses: action/checkout@v5
-         - name: this is mydotnet publish command
-           run: dotnet publish -c Release src/presentation/Nop.web/Nop.web.csproj -o demo      
+      - develop
+
+jobs:
+  dotnet_publish:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.100'
+
+      - name: Restore dependencies
+        run: dotnet restore src/presentation/Nop.Web/Nop.Web.csproj
+
+      - name: Build project
+        run: dotnet build -c Release src/presentation/Nop.Web/Nop.Web.csproj --no-restore
+
+      - name: Publish project
+        run: dotnet publish -c Release src/presentation/Nop.Web/Nop.Web.csproj -o demo --no-build
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v6
+        with:
+          args: >
+            -Dsonar.projectKey=my_sonar_project_key
+            -Dsonar.organization=my_sonar_org
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          
+        
